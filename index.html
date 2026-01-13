@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Booking Bus - Tiket Bus Online</title>
+  <style>
+    /* Reset sederhana */
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0; background:linear-gradient(180deg,#eef2f7,#f8fbff); color:#111}
+    .container{max-width:980px;margin:28px auto;padding:20px}
+    header{display:flex;align-items:center;gap:14px}
+    header h1{margin:0;font-size:20px}
+    .card{background:white;border-radius:12px; padding:18px; box-shadow:0 6px 18px rgba(27,42,70,0.06)}
+    .grid{display:grid; gap:12px}
+    .row{display:flex;gap:12px}
+    label{font-size:13px;color:#444}
+    select,input[type=date],input[type=text]{width:100%;padding:10px;border:1px solid #e3e8ef;border-radius:8px}
+    button{background:#0b61ff;color:white;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#0b61ff22;color:#0b61ff}
+    .results{margin-top:14px}
+    .bus-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:8px;border:1px solid #eef4ff}
+    .bus-info{display:flex;gap:12px;align-items:center}
+    .badge{background:#f1f7ff;color:#0b61ff;padding:6px 8px;border-radius:8px;font-weight:600}
+    .muted{color:#666;font-size:13px}
+    .price{font-weight:700;font-size:18px}
+    .small{font-size:13px}
+    .features{display:flex;gap:8px;flex-wrap:wrap}
+    .feature-pill{background:#f5f7fb;padding:6px 8px;border-radius:999px;font-size:12px;color:#333}
+    .payment-methods{display:flex;gap:10px;flex-wrap:wrap}
+    .pm{padding:8px 12px;border-radius:8px;border:1px solid #e6eefc;cursor:pointer}
+    .pm.active{background:#0b61ff;color:white;border-color:#0b61ff}
+
+    /* Modal */
+    .modal-wrap{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(12,18,34,0.45);z-index:60}
+    .modal{width:720px;max-width:95%;}
+
+    /* E-ticket */
+    .eticket{background:linear-gradient(90deg,#fff 60%, #f7fbff);padding:18px;border-radius:10px;border:1px solid #e6eefc}
+    .et-top{display:flex;justify-content:space-between;align-items:center}
+    .qr{width:96px;height:96px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px dashed #cfe0ff}
+    .et-body{display:flex;gap:12px;margin-top:12px}
+    .et-left{flex:1}
+    .et-right{min-width:180px}
+    .ticket-row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+    .muted-small{font-size:12px;color:#6b7280}
+
+    /* Print styles: only print the ticket when printing from ticket modal */
+    @media print{
+      body>*{display:none}
+      #print-area{display:block !important}
+      #print-area *{color:#000}
+      .eticket{box-shadow:none;border:none}
+    }
+
+    footer{margin-top:22px;text-align:center;color:#7b8794;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="width:56px;height:56px;border-radius:10px;background:#0b61ff;color:white;display:flex;align-items:center;justify-content:center;font-weight:700">TB</div>
+      <div>
+        <h1>Booking Bus - Tiket Bus Online</h1>
+        <div class="muted small">Pesan tiket bus mudah, cepat, dan terpercaya.</div>
+      </div>
+    </header>
+
+    <section style="margin-top:16px" class="card">
+      <form id="searchForm" class="grid">
+        <div style="display:grid;grid-template-columns:1fr 1fr 220px;gap:12px;align-items:end">
+          <div>
+            <label for="asal">Kota Asal</label>
+            <select id="asal">
+              <option value="Jakarta">Jakarta</option>
+              <option value="Bandung">Bandung</option>
+              <option value="Surabaya">Surabaya</option>
+              <option value="Yogyakarta">Yogyakarta</option>
+              <option value="Semarang">Semarang</option>
+              <option value="Malang">Malang</option>
+              <option value="Medan">Medan</option>
+              <option value="Bali">Bali</option>
+              <option value="Purwokerto">Purwokerto</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="tujuan">Kota Tujuan</label>
+            <select id="tujuan">
+              <option value="Bandung">Bandung</option>
+              <option value="Jakarta">Jakarta</option>
+              <option value="Surabaya">Surabaya</option>
+              <option value="Yogyakarta">Yogyakarta</option>
+              <option value="Semarang">Semarang</option>
+              <option value="Malang">Malang</option>
+              <option value="Medan">Medan</option>
+              <option value="Bali">Bali</option>
+              <option value="CIHONJE">CIHONJE</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="tanggal">Tanggal</label>
+            <input type="date" id="tanggal" value="2025-12-10">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:8px;align-items:center">
+          <div style="flex:1">
+            <label for="kelas">Kelas Bus</label>
+            <select id="kelas">
+              <option value="all">Semua Kelas</option>
+              <option value="economy">Economy</option>
+              <option value="business">Business</option>
+              <option value="executive">Executive</option>
+            </select>
+          </div>
+
+          <div style="width:160px;display:flex;align-items:end">
+            <button type="submit">🔍 Cari Bus Tersedia</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="results" class="results"></div>
+    </section>
+
+    <section style="margin-top:14px" class="card">
+      <h3 style="margin:0 0 8px 0">Kenapa pilih kami?</h3>
+      <div class="row features">
+        <div class="feature-pill">Beragam Pilihan Bus</div>
+        <div class="feature-pill">Harga Terjangkau</div>
+        <div class="feature-pill">Pembayaran Aman</div>
+        <div class="feature-pill">E-Ticket Instan</div>
+      </div>
+    </section>
+
+    <footer>
+      &copy; 2025 Tiket Bus Online. All rights reserved.
+    </footer>
+  </div>
+
+  <!-- Modal untuk booking + pembayaran + e-ticket -->
+  <div id="modal" class="modal-wrap">
+    <div class="modal card" role="dialog" aria-modal="true">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 id="modal-title">Detail Pemesanan</h3>
+        <button id="closeModal" class="secondary">Tutup</button>
+      </div>
+
+      <div id="modal-body" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- area untuk print (hidden until show) -->
+  <div id="print-area" style="display:none;padding:18px;" aria-hidden="true"></div>
+
+  <script>
+    // Data bus sample (jarak dalam km conservative sample distances antara kota)
+    const distances = {
+      'Jakarta|Bandung': 150000,
+      'Jakarta|Yogyakarta': 640000,
+      'Jakarta|Surabaya': 780000,
+      'Bandung|Yogyakarta': 540000,
+      'Bandung|Surabaya': 750000,
+      'Yogyakarta|Surabaya': 310000,
+      'Yogyakarta|Semarang': 110000,
+      'Semarang|Surabaya': 350000,
+      'Surabaya|Malang': 90000,
+      'Jakarta|Semarang': 540000,
+      'Jakarta|Malang': 860000,
+      'Medan|Jakarta': 290000,
+      'Bandung|Semarang': 370000,
+      'Bali|Surabaya': 370000,
+      'Bali|Jakarta': 980000,
+      'Bandung|Bali':900000,
+      'Purwokerto|CIHONJE':28
+    };
+
+    // sample fleet
+    const fleet = [
+      {id: 'B001', operator: 'TransNusa', class: 'economy', seat: 40, features:['AC','TV'], basePerKm: 0.35},
+      {id: 'B002', operator: 'PrimaTrans', class: 'business', seat: 32, features:['AC','Recliner','Snack'], basePerKm: 0.55},
+      {id: 'B003', operator: 'MegaBus', class: 'executive', seat: 24, features:['AC','Recliner','Toilet','Snack'], basePerKm: 0.78},
+      {id: 'B004', operator: 'Lion Shuttle', class: 'economy', seat: 45, features:['AC'], basePerKm: 0.30},
+      {id: 'B005', operator: 'PriorityCoach', class: 'executive', seat: 20, features:['AC','Recliner','Wifi','Toilet'], basePerKm: 0.85}
+    ];
+
+    const paymentMethods = ['Virtual Account (Bank)', 'Credit/Debit Card', 'E-Wallet (Dana/Gopay)', 'Transfer Manual'];
+
+    // helper cari jarak
+    function getDistance(a,b){
+      if(a===b) return 0;
+      const key = a + '|' + b;
+      const key2 = b + '|' + a;
+      return distances[key] ?? distances[key2] ?? null; // null kalau tidak ada
+    }
+
+    // harga = basePerKm * km * kelasModifier + fixedFee
+    function calcPrice(fleetItem, km){
+      if(km === null) return null;
+      const classModifier = {economy:1, business:1.25, executive:1.6};
+      const fixed = 15000; // biaya operasional minimal
+      const price = Math.round((fleetItem.basePerKm * km * classModifier[fleetItem.class] + fixed));
+      return price;
+    }
+
+    // format rupiah
+    function formatRupiah(num){
+      return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    // render results
+    const resultsEl = document.getElementById('results');
+    const searchForm = document.getElementById('searchForm');
+
+    searchForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      const asal = document.getElementById('asal').value;
+      const tujuan = document.getElementById('tujuan').value;
+      const tanggal = document.getElementById('tanggal').value;
+      const kelas = document.getElementById('kelas').value;
+
+      if(asal === tujuan){
+        resultsEl.innerHTML = '<div class="card" style="padding:14px">Kota asal dan tujuan tidak boleh sama.</div>';
+        return;
+      }
+
+      const km = getDistance(asal, tujuan);
+      if(km === null){
+        resultsEl.innerHTML = '<div class="card" style="padding:14px">Maaf, rute antara <strong>'+asal+'</strong> dan <strong>'+tujuan+'</strong> belum tersedia pada demo ini.</div>';
+        return;
+      }
+
+      // filter fleet by class
+      const available = fleet.filter(b => (kelas === 'all' ? true : b.class === kelas));
+
+      // build DOM
+      if(available.length === 0){
+        resultsEl.innerHTML = '<div class="card" style="padding:14px">Tidak ada bus sesuai filter.</div>';
+        return;
+      }
+
+      const nodes = available.map(b => {
+        const price = calcPrice(b, km);
+        return `
+          <div class="bus-item" data-id="${b.id}" data-price="${price}" data-km="${km}">
+            <div class="bus-info">
+              <div style="width:8px"></div>
+              <div>
+                <div style="font-weight:700">${b.operator} <span class="muted small">· ${b.class}</span></div>
+                <div class="muted">${b.features.join(', ')} · ${b.seat} seats</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div class="price">${formatRupiah(price)}</div>
+              <div class="muted-small">Jarak: ${km} km</div>
+              <div style="margin-top:8px"><button class="bookBtn" data-id="${b.id}" data-price="${price}" data-operator="${b.operator}" data-km="${km}">Pesan</button></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      resultsEl.innerHTML = '<div style="display:grid;gap:10px">'+nodes+'</div>';
+
+      // attach listeners for book buttons
+      document.querySelectorAll('.bookBtn').forEach(btn => btn.addEventListener('click', openBooking));
+    });
+
+    // open modal booking
+    const modalWrap = document.getElementById('modal');
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+
+    function openBooking(e){
+      const btn = e.currentTarget;
+      const id = btn.dataset.id;
+      const operator = btn.dataset.operator;
+      const price = parseInt(btn.dataset.price,10);
+      const km = parseInt(btn.dataset.km,10);
+      const tanggal = document.getElementById('tanggal').value;
+      modalTitle.textContent = `Pesan: ${operator} — ${id}`;
+
+      modalBody.innerHTML = `
+        <div style="display:grid;gap:10px">
+          <div><strong>Operator:</strong> ${operator} — <span class="muted">${id}</span></div>
+          <div><strong>Tanggal:</strong> ${tanggal}</div>
+          <div><strong>Jarak:</strong> ${km} km</div>
+          <div><strong>Harga:</strong> ${formatRupiah(price)}</div>
+
+          <div>
+            <label>Nama Penumpang</label>
+            <input id="nama" type="text" placeholder="Nama lengkap" />
+          </div>
+
+          <div>
+            <label>Metode Pembayaran</label>
+            <div class="payment-methods" id="pm-list"></div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="payBtn">Bayar & Dapatkan E-Ticket</button>
+            <button class="secondary" id="cancelBtn">Batal</button>
+          </div>
+        </div>
+      `;
+
+      // fill payment methods
+      const pmList = document.getElementById('pm-list');
+      paymentMethods.forEach((p,i) => {
+        const div = document.createElement('div');
+        div.className = 'pm';
+        if(i===0) div.classList.add('active');
+        div.textContent = p;
+        div.dataset.method = p;
+        div.addEventListener('click', ()=>{
+          document.querySelectorAll('.pm').forEach(n=>n.classList.remove('active'));
+          div.classList.add('active');
+        });
+        pmList.appendChild(div);
+      });
+
+      document.getElementById('payBtn').addEventListener('click', ()=>simulatePayment({id,operator,price,km,tanggal}));
+      document.getElementById('cancelBtn').addEventListener('click', closeModal);
+
+      modalWrap.style.display = 'flex';
+    }
+
+    function closeModal(){
+      modalWrap.style.display = 'none';
+      modalBody.innerHTML = '';
+    }
+
+    // simulate payment (fake)
+    function simulatePayment(booking){
+      const nama = document.getElementById('nama').value || 'Penumpang';
+      const method = document.querySelector('.pm.active').dataset.method;
+
+      // small validation
+      if(!nama){ alert('Masukkan nama penumpang'); return; }
+
+      // simulate processing
+      const processing = document.createElement('div');
+      processing.innerHTML = '<div class="muted">Memproses pembayaran...</div>';
+      modalBody.appendChild(processing);
+
+      setTimeout(()=>{
+        // success
+        const trx = 'TRX' + Math.floor(Math.random()*900000 + 100000);
+        const seat = Math.floor(Math.random() * 25) + 1;
+        const ticket = {
+          ticketId: 'TKT' + Date.now(),
+          operator: booking.operator,
+          busId: booking.id,
+          passenger: nama,
+          date: booking.tanggal ?? booking.tanggal,
+          method: method,
+          price: booking.price ?? booking.price,
+          km: booking.km ?? booking.km,
+          seat: seat,
+          trx: trx
+        };
+
+        showETicket(ticket);
+      }, 1200);
+    }
+
+    function showETicket(t){
+      // build ticket HTML
+      const ticketHtml = `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="eticket" id="ticket-visible">
+            <div class="et-top">
+              <div>
+                <div style="font-weight:800;font-size:18px">${t.operator} — E-TICKET</div>
+                <div class="muted-small">Booking ID: <strong>${t.ticketId}</strong></div>
+              </div>
+              <div class="qr">QR<br/>${t.trx}</div>
+            </div>
+
+            <div class="et-body">
+              <div class="et-left">
+                <div class="ticket-row"><div class="muted-small">Penumpang</div><div>${t.passenger}</div></div>
+                <div class="ticket-row"><div class="muted-small">Rute</div><div>${document.getElementById('asal').value} → ${document.getElementById('tujuan').value}</div></div>
+                <div class="ticket-row"><div class="muted-small">Tanggal</div><div>${t.date}</div></div>
+                <div class="ticket-row"><div class="muted-small">Seat</div><div>${t.seat}</div></div>
+                <div class="ticket-row"><div class="muted-small">Metode Pembayaran</div><div>${t.method}</div></div>
+              </div>
+              <div class="et-right">
+                <div style="font-weight:800;font-size:22px">${formatRupiah(t.price)}</div>
+                <div class="muted-small">Jarak: ${t.km} km</div>
+                <div style="margin-top:12px" class="muted-small">Transaksi: ${t.trx}</div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;font-size:12px;color:#64748b">Tunjukkan e-ticket ini kepada petugas saat boarding. E-ticket ini sah setelah pembayaran berhasil.</div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="printTicket">Cetak / Download</button>
+            <button class="secondary" id="closeTicket">Tutup</button>
+          </div>
+        </div>
+      `;
+
+      modalBody.innerHTML = ticketHtml;
+
+      document.getElementById('printTicket').addEventListener('click', ()=>{
+        // copy ticket to print area and call print()
+        const printArea = document.getElementById('print-area');
+        printArea.innerHTML = document.getElementById('ticket-visible').outerHTML;
+        printArea.style.display = 'block';
+        window.print();
+        // hide after print
+        setTimeout(()=>{ printArea.style.display = 'none'; }, 500);
+      });
+
+      document.getElementById('closeTicket').addEventListener('click', closeModal);
+    }
+
+    // set initial sample selection
+    document.getElementById('asal').value = 'Jakarta';
+    document.getElementById('tujuan').value = 'Bandung';
+    document.getElementById('kelas').value = 'all';
+
+  </script>
+</body>
+</html>
